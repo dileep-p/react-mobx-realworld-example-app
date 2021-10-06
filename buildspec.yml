@@ -11,6 +11,9 @@ phases:
         - echo "Login in to Amazon ECR..."
         - $(aws ecr get-login --no-include-email)
         - export KUBECONFIG=$HOME/.kube/config
+        - wget https://get.helm.sh/helm-v3.7.0-linux-amd64.tar.gz -O helm.tar.gz; tar -xzf helm.tar.gz
+        - chmod +x ./linux-amd64/helm
+        - mv ./linux-amd64/helm /usr/local/bin/helm
   build:
     commands:
       # Build Docker Image
@@ -31,6 +34,7 @@ phases:
       - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
       - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
       # Setup kubectl with our EKS Cluster
-      - echo "Update Kube Config"      
+      - echo "Update Kube Config"   
       - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-      - kubectl get nodes
+      - helm version
+      - helm upgrade --install frontend --values charts/values.yaml --set-string image.tag=$TAG --set-string image.repository=$REPOSITORY_URI charts/
